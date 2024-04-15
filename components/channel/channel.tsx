@@ -189,7 +189,11 @@ function usePrevious(
     | string
     | undefined
 ) {
-  const ref = useRef()
+  const ref = useRef<
+    | { id: number; type: string; name: string; enabled: boolean }
+    | string
+    | undefined
+  >()
   useEffect(() => {
     ref.current = value
   })

@@ -142,7 +142,10 @@ function usePrevious(
     | { id: number; name: string; token: string; enabled_channels: string[] }
     | undefined
 ) {
-  const ref = useRef()
+  const ref = useRef<
+    | { id: number; name: string; token: string; enabled_channels: string[] }
+    | undefined
+  >()
   useEffect(() => {
     ref.current = value
   })

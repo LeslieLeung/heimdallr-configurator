@@ -37,10 +37,11 @@ export default function Home() {
     let out = ""
     let enabledGroups = []
     // groups
-    let groups = JSON.parse(localStorage.getItem(CACHE.GROUPS))
-    if (groups === null) {
+    let groupCache = localStorage.getItem(CACHE.GROUPS)
+    if (groupCache === null) {
       return
     }
+    let groups = JSON.parse(groupCache)
     for (let i = 0; i < groups.length; i++) {
       let group = groups[i]
       out += "# group " + group.name + "\n"
@@ -52,7 +53,11 @@ export default function Home() {
     out += "ENABLED_GROUPS=" + enabledGroups + "\n\n"
 
     // channels
-    let channels = JSON.parse(localStorage.getItem(CACHE.CHANNELS))
+    let channelCache = localStorage.getItem(CACHE.CHANNELS)
+    if (channelCache === null) {
+      return
+    }
+    let channels = JSON.parse(channelCache)
     if (channels === null) {
       return
     }
@@ -81,7 +86,9 @@ export default function Home() {
       out += "\n"
     }
 
-    textareaRef.current.value = out
+    if (textareaRef.current) {
+      ;(textareaRef.current as HTMLTextAreaElement).value = out
+    }
   }
 
   useEffect(() => {
@@ -97,7 +104,7 @@ export default function Home() {
     let lastId =
       typeof window !== "undefined" &&
       localStorage.getItem(CACHE.LAST_CHANNEL_ID)
-        ? parseInt(localStorage.getItem(CACHE.LAST_CHANNEL_ID))
+        ? parseInt(localStorage.getItem(CACHE.LAST_CHANNEL_ID)!)
         : 0
 
     const newChannel = {
@@ -123,7 +130,7 @@ export default function Home() {
   const addGroup = () => {
     let lastId =
       typeof window !== "undefined" && localStorage.getItem(CACHE.LAST_GROUP_ID)
-        ? parseInt(localStorage.getItem(CACHE.LAST_GROUP_ID))
+        ? parseInt(localStorage.getItem(CACHE.LAST_GROUP_ID)!)
         : 0
 
     const newGroup = {
@@ -158,7 +165,12 @@ export default function Home() {
   }
 
   const handleCopy = () => {
-    const text = textareaRef.current?.value ?? ""
+    let text
+    if (textareaRef.current) {
+      text = (textareaRef.current as any).value
+    } else {
+      text = ""
+    }
     navigator.clipboard.writeText(text)
     toast({
       title: "Copied",
@@ -166,7 +178,12 @@ export default function Home() {
   }
 
   const handleExport = () => {
-    const text = textareaRef.current?.value ?? ""
+    let text
+    if (textareaRef.current) {
+      text = (textareaRef.current as any).value
+    } else {
+      text = ""
+    }
     const blob = new Blob([text], { type: "application/octet-stream" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -198,7 +215,7 @@ export default function Home() {
                         <ChannelForm
                           channel={channel}
                           onFormChange={(newGroup: any) =>
-                            updateChannel(newGroup, i)
+                            updateChannel(newGroup, i as string | number)
                           }
                         />
                       </CardContent>
@@ -209,21 +226,23 @@ export default function Home() {
               </TabsContent>
               <TabsContent value="groups">
                 <div className="flex flex-col space-y-4">
-                  {groups.map((group: any, i: Key | null | undefined) => (
-                    <Card key={i}>
-                      <CardHeader>
-                        <CardTitle>Group #{group.id + 1}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <GroupForm
-                          group={group}
-                          onFormChange={(newGroup: any) =>
-                            updateGroup(newGroup, i)
-                          }
-                        />
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {groups.map(
+                    (group: any, i: string | number | null | undefined) => (
+                      <Card key={i}>
+                        <CardHeader>
+                          <CardTitle>Group #{group.id + 1}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <GroupForm
+                            group={group}
+                            onFormChange={(newGroup: any) =>
+                              updateGroup(newGroup, i as string | number)
+                            }
+                          />
+                        </CardContent>
+                      </Card>
+                    )
+                  )}
                   <Button onClick={addGroup}>Add Group</Button>
                 </div>
               </TabsContent>
