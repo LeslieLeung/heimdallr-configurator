@@ -1,0 +1,15 @@
+export const CHANNELS = {
+  BARK: "bark",
+  WECOM_WEBHOOK: "wecom_webhook",
+  WECOM_APP: "wecom_app",
+  PUSHOVER: "pushover",
+  PUSHDEER: "pushdeer",
+  CHANIFY: "chanify",
+  EMAIL: "email",
+  DISCORD_WEBHOOK: "discord_webhook",
+  TELEGRAM: "telegram",
+  NTFY: "ntfy",
+  LARK_WEBHOOK: "lark_webhook",
+  DINGTALK_WEBHOOK: "dingtalk_webhook",
+  APPRISE: "apprise",
+}

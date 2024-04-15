@@ -1,113 +1,311 @@
-import Image from "next/image";
+"use client"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+import { useToast } from "@/components/ui/use-toast"
+
+import { useRef, useState, useEffect, Key } from "react"
+
+import { ChannelForm } from "@/components/channel/channel"
+import { Navigation } from "@/components/common/nav"
+import { GroupForm } from "@/components/group/group"
+import { CACHE } from "@/app/constants"
 
 export default function Home() {
+  const textareaRef = useRef(null)
+  const { toast } = useToast()
+
+  const initialChannels =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem(CACHE.CHANNELS) ?? "[]") || [
+          { type: "", name: "" },
+        ]
+      : [{ type: "", name: "" }]
+  const [channels, setChannels] = useState(initialChannels)
+
+  const initialGroups =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem(CACHE.GROUPS) ?? "[]") || [{ name: "" }]
+      : [{ name: "" }]
+  const [groups, setGroups] = useState(initialGroups)
+
+  const refreshDisplay = () => {
+    let out = ""
+    let enabledGroups = []
+    // groups
+    let groups = JSON.parse(localStorage.getItem(CACHE.GROUPS))
+    if (groups === null) {
+      return
+    }
+    for (let i = 0; i < groups.length; i++) {
+      let group = groups[i]
+      out += "# group " + group.name + "\n"
+      out += group.name + "_TOKEN=" + group.token + "\n"
+      out += group.name + "_ENABLED_CHANNELS=" + group.enabled_channels + "\n"
+      out += "\n"
+      enabledGroups.push(group.name)
+    }
+    out += "ENABLED_GROUPS=" + enabledGroups + "\n\n"
+
+    // channels
+    let channels = JSON.parse(localStorage.getItem(CACHE.CHANNELS))
+    if (channels === null) {
+      return
+    }
+    for (let i = 0; i < channels.length; i++) {
+      let channel = channels[i]
+      if (channel.enabled === false) {
+        continue
+      }
+      // iterate over the keys
+      let keys = Object.keys(channel)
+      out += "# channel " + channel.name + "\n"
+      out += channel.name + "_type=" + channel.type + "\n"
+      for (let j = 0; j < keys.length; j++) {
+        if (
+          keys[j] === "type" ||
+          keys[j] === "name" ||
+          keys[j] === "enabled" ||
+          keys[j] === "id"
+        ) {
+          continue
+        }
+        let k = keys[j].toUpperCase()
+        // k might need some more mapping
+        out += channel.name + "_" + k + "=" + channel[keys[j]] + "\n"
+      }
+      out += "\n"
+    }
+
+    textareaRef.current.value = out
+  }
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CACHE.CHANNELS, JSON.stringify(channels))
+      localStorage.setItem(CACHE.GROUPS, JSON.stringify(groups))
+    }
+    refreshDisplay()
+  }, [channels, groups])
+
+  const addChannel = () => {
+    // Retrieve the lastId from localStorage, or default to 0 if it doesn't exist
+    let lastId =
+      typeof window !== "undefined" &&
+      localStorage.getItem(CACHE.LAST_CHANNEL_ID)
+        ? parseInt(localStorage.getItem(CACHE.LAST_CHANNEL_ID))
+        : 0
+
+    const newChannel = {
+      id: lastId,
+      type: "",
+      name: "",
+      enabled: true,
+    }
+
+    // Increment the lastId and store it in localStorage
+    lastId++
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CACHE.LAST_CHANNEL_ID, lastId.toString())
+    }
+
+    const newChannels = [...channels, newChannel]
+    setChannels(newChannels)
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CACHE.CHANNELS, JSON.stringify(newChannels))
+    }
+  }
+
+  const addGroup = () => {
+    let lastId =
+      typeof window !== "undefined" && localStorage.getItem(CACHE.LAST_GROUP_ID)
+        ? parseInt(localStorage.getItem(CACHE.LAST_GROUP_ID))
+        : 0
+
+    const newGroup = {
+      id: lastId,
+      name: "",
+      token: "",
+      enabled_channels: [],
+    }
+
+    lastId++
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CACHE.LAST_GROUP_ID, lastId.toString())
+    }
+
+    const newGroups = [...groups, newGroup]
+    setGroups(newGroups)
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CACHE.GROUPS, JSON.stringify(newGroups))
+    }
+  }
+
+  const updateChannel = (newChannel: any, index: string | number) => {
+    const newCards = [...channels]
+    newCards[Number(index)] = newChannel
+    setChannels(newCards)
+  }
+
+  const updateGroup = (newGroup: any, index: string | number) => {
+    const newGroups = [...groups]
+    newGroups[Number(index)] = newGroup
+    setGroups(newGroups)
+  }
+
+  const handleCopy = () => {
+    const text = textareaRef.current?.value ?? ""
+    navigator.clipboard.writeText(text)
+    toast({
+      title: "Copied",
+    })
+  }
+
+  const handleExport = () => {
+    const text = textareaRef.current?.value ?? ""
+    const blob = new Blob([text], { type: "application/octet-stream" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "env"
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <>
+      <Navigation />
+      <main className="flex flex-wrap">
+        <div className="w-1/2 p-4">
+          <div className="flex flex-col space-y-4 border rounded-lg p-4">
+            <Tabs defaultValue="channels">
+              <TabsList>
+                <TabsTrigger value="channels">Channels</TabsTrigger>
+                <TabsTrigger value="groups">Groups</TabsTrigger>
+              </TabsList>
+              <TabsContent value="channels">
+                <div className="flex flex-col space-y-4">
+                  {channels.map((channel: any, i: Key | null | undefined) => (
+                    <Card key={i}>
+                      <CardHeader>
+                        <CardTitle>Channel #{channel.id}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ChannelForm
+                          channel={channel}
+                          onFormChange={(newGroup: any) =>
+                            updateChannel(newGroup, i)
+                          }
+                        />
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Button onClick={addChannel}>Add Channel</Button>
+                </div>
+              </TabsContent>
+              <TabsContent value="groups">
+                <div className="flex flex-col space-y-4">
+                  {groups.map((group: any, i: Key | null | undefined) => (
+                    <Card key={i}>
+                      <CardHeader>
+                        <CardTitle>Group #{group.id + 1}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <GroupForm
+                          group={group}
+                          onFormChange={(newGroup: any) =>
+                            updateGroup(newGroup, i)
+                          }
+                        />
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Button onClick={addGroup}>Add Group</Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
-      </div>
+        <div className="w-1/2 p-4 flex flex-col flex-grow">
+          <div className="flex flex-col flex-grow">
+            <div className="flex flex-col flex-grow space-y-3 border rounded-lg p-4">
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleCopy}
+                >
+                  Copy
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleExport}
+                >
+                  Export
+                </Button>
+              </div>
+              <div className="flex space-x-2">
+                <ClearButton />
+              </div>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+              <div className="w-full space-y-2 flex flex-col flex-grow">
+                <Textarea
+                  ref={textareaRef}
+                  className="flex-grow resize-none"
+                  suppressHydrationWarning
+                  disabled
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </>
+  )
+}
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+export function ClearButton() {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild className="w-full">
+        <Button variant="destructive">Clear</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete all the
+            content on this page.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              localStorage.clear()
+              // force a refresh
+              window.location.reload()
+            }}
+          >
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
 }
