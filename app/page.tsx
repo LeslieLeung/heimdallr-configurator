@@ -3,17 +3,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { useToast } from "@/components/ui/use-toast"
@@ -23,6 +12,7 @@ import { useRef, useState, useEffect, Key } from "react"
 import { ChannelForm } from "@/components/channel/channel"
 import { Navigation } from "@/components/common/nav"
 import { GroupForm } from "@/components/group/group"
+import { ClearButton } from "@/components/common/clear"
 import { CACHE } from "@/app/constants"
 
 export default function Home() {
@@ -276,36 +266,5 @@ export default function Home() {
         </div>
       </main>
     </>
-  )
-}
-
-export function ClearButton() {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild className="w-full">
-        <Button variant="destructive">Clear</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete all the
-            content on this page.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => {
-              localStorage.clear()
-              // force a refresh
-              window.location.reload()
-            }}
-          >
-            Continue
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   )
 }
