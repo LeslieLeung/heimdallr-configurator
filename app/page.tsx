@@ -257,6 +257,7 @@ export default function Home() {
                   variant="outline"
                   className="w-full"
                   onClick={handleCopy}
+                  data-umami-event="copy"
                 >
                   Copy
                 </Button>
@@ -264,6 +265,7 @@ export default function Home() {
                   variant="outline"
                   className="w-full"
                   onClick={handleExport}
+                  data-umami-event="export"
                 >
                   Export
                 </Button>
