@@ -14,6 +14,7 @@ import { Navigation } from "@/components/common/nav"
 import { GroupForm } from "@/components/group/group"
 import { ClearButton } from "@/components/common/clear"
 import { CACHE } from "@/app/constants"
+import { Option } from "@/components/ui/multiple-selector"
 
 export default function Home() {
   const textareaRef = useRef(null)
@@ -46,7 +47,13 @@ export default function Home() {
       let group = groups[i]
       out += "# group " + group.name + "\n"
       out += group.name + "_TOKEN=" + group.token + "\n"
-      out += group.name + "_ENABLED_CHANNELS=" + group.enabled_channels + "\n"
+      out +=
+        group.name +
+        "_ENABLED_CHANNELS=" +
+        group.enabled_channels
+          .map((channel: Option) => channel.value)
+          .join(",") +
+        "\n"
       out += "\n"
       enabledGroups.push(group.name)
     }

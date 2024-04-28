@@ -7,18 +7,26 @@ import {
   FormMessage,
   FormControl,
 } from "@/components/ui/form"
+import MultipleSelector from "@/components/ui/multiple-selector"
+import { Option } from "@/components/ui/multiple-selector"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { CACHE } from "@/app/constants"
+import { baseChannelSchema } from "../channel/base"
+
+const optionSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+})
 
 export const groupSchema = z.object({
   id: z.number(),
   name: z.string(),
   token: z.string(),
-  enabled_channels: z.array(z.string()),
+  enabled_channels: z.array(optionSchema),
 })
 
 export function GroupForm({
@@ -66,6 +74,23 @@ export function GroupForm({
     }
     localStorage.setItem(CACHE.GROUPS, JSON.stringify(newConf))
   }
+
+  type BaseChannel = z.infer<typeof baseChannelSchema>
+
+  const [enabledChannelsList, setEnabledChannelsList] = useState<BaseChannel[]>(
+    []
+  )
+
+  useEffect(() => {
+    const channels = localStorage.getItem(CACHE.CHANNELS)
+    if (channels) {
+      const parsedChannels = JSON.parse(channels) as BaseChannel[]
+      const enabledChannels = parsedChannels.filter(
+        (channel) => channel.enabled
+      )
+      setEnabledChannelsList(enabledChannels)
+    }
+  }, [])
 
   useEffect(() => {
     if (JSON.stringify(watchAllFields) !== JSON.stringify(prevWatchAllFields)) {
@@ -118,10 +143,27 @@ export function GroupForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Enabled Channels</FormLabel>
-                <Input {...field} placeholder="Enabled Channels" />
+                <FormControl>
+                  <MultipleSelector
+                    value={field.value}
+                    onChange={field.onChange}
+                    hidePlaceholderWhenSelected
+                    placeholder="Select channels"
+                    options={enabledChannelsList.map(
+                      (channel) =>
+                        ({
+                          value: channel.name,
+                          label: channel.name,
+                        } as Option)
+                    )}
+                  />
+                </FormControl>
                 <FormDescription>
-                  Enter the enabled channels. Recommended to copy from the right
-                  panel.
+                  <p>Select the channels for group.</p>
+                  <p>
+                    Notice: You may need to manually remove them after disabled
+                    in the channel tab.
+                  </p>
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -139,11 +181,11 @@ export function GroupForm({
 // Custom hook to get the previous value of a variable
 function usePrevious(
   value:
-    | { id: number; name: string; token: string; enabled_channels: string[] }
+    | { id: number; name: string; token: string; enabled_channels: {} }
     | undefined
 ) {
   const ref = useRef<
-    | { id: number; name: string; token: string; enabled_channels: string[] }
+    | { id: number; name: string; token: string; enabled_channels: {} }
     | undefined
   >()
   useEffect(() => {

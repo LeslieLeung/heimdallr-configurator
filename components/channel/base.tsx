@@ -79,7 +79,7 @@ export function BaseChannelForm({ control }: { control: any }) {
           </FormItem>
         )}
       />
-      {/* <FormField
+      <FormField
         control={control}
         name="enabled"
         render={({ field }) => (
@@ -90,7 +90,7 @@ export function BaseChannelForm({ control }: { control: any }) {
             <FormMessage />
           </FormItem>
         )}
-      /> */}
+      />
     </>
   )
 }
