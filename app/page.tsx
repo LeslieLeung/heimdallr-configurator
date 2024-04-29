@@ -76,7 +76,7 @@ export default function Home() {
       // iterate over the keys
       let keys = Object.keys(channel)
       out += "# channel " + channel.name + "\n"
-      out += channel.name + "_type=" + channel.type + "\n"
+      out += channel.name + "_TYPE=" + channel.type + "\n"
       for (let j = 0; j < keys.length; j++) {
         if (
           keys[j] === "type" ||
